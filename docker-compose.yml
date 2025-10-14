@@ -6,7 +6,6 @@ services:
     image: ghcr.io/lemongooo/data-collector:latest 
     volumes:
       - ./t-ACT-ROS/dataset:/root/Documents/t-ACT-ROS/dataset
-      # - ./demo-galaxea:/workspace
     deploy:
       resources:
         reservations:
@@ -46,32 +45,35 @@ services:
         --data_path /workspace/dataset
         --save_dir /workspace/checkpoints
   
-  # isaac-node:
-  #   image: isaac-sim-node:test
-  #   container_name: isaac-node
-  #   environment:
-  #     - ACCEPT_EULA=Y
-  #     - ROS_DISTRO=humble
-  #     - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-  #     - DISPLAY=${DISPLAY}
-  #   runtime: nvidia
-  #   network_mode: "host"
-  #   ipc: host
-  #   shm_size: '16gb'
-  #   working_dir: /workspace/inference_ros
-  #   volumes:
-  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
-  #     - ./t-ACT-ROS/usd:/workspace/usd
-  #     - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
-  #     - ./t-ACT-ROS/model:/workspace/model
-  #   # depends_on:
-  #   #   - trainer
-  #   entrypoint: []
-  #   command: ["/bin/bash", "-c", "/isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py"]
-  #   # command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && /isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py"]
+  isaac-node:
+    image: isaac-sim-node:test
+    container_name: isaac-node
+    environment:
+      - ACCEPT_EULA=Y
+      - ROS_DISTRO=humble
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
+    network_mode: "host"
+    ipc: host
+    shm_size: '16gb'
+    working_dir: /workspace/inference_ros
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./t-ACT-ROS/usd:/workspace/usd
+      - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      - ./t-ACT-ROS/model:/workspace/model
+    # depends_on:
+    #   - trainer
+    entrypoint: []
+    #非常重要！！numpy必须是1.26.0版本，否则会报错
+    #请使用python.sh启动脚本，而不是runapp.sh
+    command: ["/bin/bash", "-c", "/isaac-sim/python.sh -m pip install numpy==1.26.0 --force-reinstall --no-deps -i https://pypi.tuna.tsinghua.edu.cn/simple && /isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py"]
 
   
-  mnode:
+  model-node:
       image: model-node:test
       container_name: model-node
       environment:

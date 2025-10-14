@@ -4,6 +4,8 @@ This project provides two Docker images and one compose.yml:
 
 - **data-collector**: Runs Isaac Sim and executes simulation scripts.  
 - **trainer**: Runs the training process with datasets and saves checkpoints.
+- **isaac-node**: Runs the robot simulation and publishes joint states to ROS topics.
+- **model-node**: Receives joint/camera data, runs model inference and publishes control commands.
 - **docker-compose.yml**:Defines and starts both services with GPU support, mounted volumes, and proper resource limits.
 
 ## ⚙️ Prerequisites
@@ -25,6 +27,8 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
 ```bash
 docker pull ghcr.io/lemongooo/data-collector:latest
 docker pull ghcr.io/lemongooo/trainer:latest
+docker pull ghcr.io/lemongooo/isaac-node:latest
+docker pull ghcr.io/lemongooo/model-node:latest
 ```
 
 ## Run with Docker Compose
@@ -38,9 +42,11 @@ Start the services:
 ```bash
 docker compose up data-collector
 docker compose up trainer
+docker compose up isaac-node
+docker compose up model-node
 ```
 
 Enter the container:
 ```bash
-docker compose run --rm --service-ports --entrypoint /bin/bash data-collector
+docker compose run --rm --entrypoint /bin/bash [SERVICE-NAME]
 ```
