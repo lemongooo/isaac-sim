@@ -5,7 +5,7 @@ services:
     image: ghcr.io/lemongooo/data-collector:latest 
     volumes:
       - ./t-ACT-ROS/dataset:/root/Documents/t-ACT-ROS/dataset
-      - ./demo-galaxea:/workspace
+      # - ./demo-galaxea:/workspace
     deploy:
       resources:
         reservations:
