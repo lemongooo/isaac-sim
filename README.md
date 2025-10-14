@@ -27,7 +27,7 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
 ```bash
 docker pull ghcr.io/lemongooo/data-collector:latest
 docker pull ghcr.io/lemongooo/trainer:latest
-docker pull ghcr.io/lemongooo/isaac-node:latest
+docker pull ghcr.io/lemongooo/isaac-sim-node:latest
 docker pull ghcr.io/lemongooo/model-node:latest
 ```
 
