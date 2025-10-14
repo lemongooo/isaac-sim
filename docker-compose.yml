@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   data-collector:
-    #build: ./demo-galaxea
     image: ghcr.io/lemongooo/data-collector:latest 
     volumes:
       - ./t-ACT-ROS/dataset:/root/Documents/t-ACT-ROS/dataset
@@ -19,14 +18,10 @@ services:
     ulimits:
       memlock: -1
       stack: 67108864
-    # command: /bin/bash
-    # command: /isaac-sim/python.sh /workspace/main1.
-    # entrypoint: ["/isaac-sim/python.sh", "/workspace/main1.py"]
-    entrypoint: ["/isaac-sim/python.sh"]
-    command: ["/workspace/main1.py"]
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/isaac-sim/python.sh -m pip install psutil && /isaac-sim/python.sh /workspace/main1.py"]
 
-  trainer:
-    #build: ./t-ACT-ROS   
+  trainer:   
     image: ghcr.io/lemongooo/trainer:latest    
     volumes:
       - ./t-ACT-ROS/dataset:/workspace/dataset
@@ -47,3 +42,47 @@ services:
       python train.py
         --data_path /workspace/dataset
         --save_dir /workspace/checkpoints
+  
+  # isaac-node:
+  #   image: isaac-sim-node:test
+  #   container_name: isaac-node
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - ROS_DISTRO=humble
+  #     - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+  #     - DISPLAY=${DISPLAY}
+  #   runtime: nvidia
+  #   network_mode: "host"
+  #   ipc: host
+  #   shm_size: '16gb'
+  #   working_dir: /workspace/inference_ros
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  #     - ./t-ACT-ROS/usd:/workspace/usd
+  #     - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+  #     - ./t-ACT-ROS/model:/workspace/model
+  #   # depends_on:
+  #   #   - trainer
+  #   entrypoint: []
+  #   command: ["/bin/bash", "-c", "/isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py"]
+  #   # command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && /isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py"]
+
+  
+  mnode:
+      image: model-node:test
+      container_name: model-node
+      environment:
+        - ROS_DISTRO=humble
+        - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      runtime: nvidia
+      network_mode: "host"
+      ipc: host
+      shm_size: '16gb'
+      working_dir: /workspace/inference_ros
+      volumes:
+        - ./t-ACT-ROS/model:/workspace/model
+        - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      # depends_on:
+      #   - isaac-node
+      command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single.py --device=cuda"]
+
