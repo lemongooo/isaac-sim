@@ -39,3 +39,8 @@ Start the services:
 docker compose up data-collector
 docker compose up trainer
 ```
+
+Enter the container:
+```bash
+docker compose run --rm --service-ports --entrypoint /bin/bash data-collector
+```

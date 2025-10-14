@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   data-collector:
+    container_name: data-collector
     image: ghcr.io/lemongooo/data-collector:latest 
     volumes:
       - ./t-ACT-ROS/dataset:/root/Documents/t-ACT-ROS/dataset
@@ -21,7 +22,9 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command: ["/isaac-sim/python.sh -m pip install psutil && /isaac-sim/python.sh /workspace/main1.py"]
 
-  trainer:   
+
+  trainer:
+    container_name: trainer   
     image: ghcr.io/lemongooo/trainer:latest    
     volumes:
       - ./t-ACT-ROS/dataset:/workspace/dataset
