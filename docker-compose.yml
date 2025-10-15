@@ -4,8 +4,14 @@ services:
   data-collector:
     container_name: data-collector
     image: ghcr.io/lemongooo/data-collector:latest 
+    environment:
+      - ACCEPT_EULA=Y
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
     volumes:
       - ./t-ACT-ROS/dataset:/root/Documents/t-ACT-ROS/dataset
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
     deploy:
       resources:
         reservations:
@@ -19,7 +25,7 @@ services:
       memlock: -1
       stack: 67108864
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/isaac-sim/python.sh -m pip install psutil && /isaac-sim/python.sh /workspace/main1.py"]
+    command: ["/isaac-sim/python.sh -m pip install psutil && /isaac-sim/python.sh /workspace/main1.py --headless=False"]
 
 
   trainer:
@@ -46,7 +52,7 @@ services:
         --save_dir /workspace/checkpoints
   
   isaac-node:
-    image: isaac-sim-node:test
+    image: ghcr.io/lemongooo/isaac-sim-node:latest
     container_name: isaac-node
     environment:
       - ACCEPT_EULA=Y
@@ -55,8 +61,15 @@ services:
       - DISPLAY=${DISPLAY}
       - NVIDIA_DRIVER_CAPABILITIES=all
       - NVIDIA_VISIBLE_DEVICES=all
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      # 添加 Fast DDS 配置
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastdds.xml
     runtime: nvidia
-    network_mode: "host"
+    # network_mode: "host"
+    networks:
+      - ros_network
     ipc: host
     shm_size: '16gb'
     working_dir: /workspace/inference_ros
@@ -65,6 +78,7 @@ services:
       - ./t-ACT-ROS/usd:/workspace/usd
       - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
       - ./t-ACT-ROS/model:/workspace/model
+      - ./fastdds.xml:/workspace/fastdds.xml:ro
     # depends_on:
     #   - trainer
     entrypoint: []
@@ -74,20 +88,30 @@ services:
 
   
   model-node:
-      image: model-node:test
+      image: ghcr.io/lemongooo/model-node:latest
       container_name: model-node
       environment:
         - ROS_DISTRO=humble
         - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+        - ROS_DOMAIN_ID=0
+        - ROS_LOCALHOST_ONLY=0
+        # 添加 Fast DDS 配置
+        - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastdds.xml
       runtime: nvidia
-      network_mode: "host"
+      # network_mode: "host"
+      networks:
+      - ros_network
       ipc: host
       shm_size: '16gb'
       working_dir: /workspace/inference_ros
       volumes:
         - ./t-ACT-ROS/model:/workspace/model
         - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+        - ./fastdds.xml:/workspace/fastdds.xml:ro
       # depends_on:
       #   - isaac-node
       command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single.py --device=cuda"]
 
+networks:
+  ros_network:
+    driver: bridge
