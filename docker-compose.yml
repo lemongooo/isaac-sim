@@ -32,8 +32,8 @@ services:
     container_name: trainer   
     image: ghcr.io/lemongooo/trainer:latest    
     volumes:
-      - ./t-ACT-ROS/dataset:/workspace/dataset
-      - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      # - ./t-ACT-ROS/dataset:/workspace/dataset
+      # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
     deploy:
       resources:
         reservations:
@@ -75,9 +75,9 @@ services:
     working_dir: /workspace/inference_ros
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./t-ACT-ROS/usd:/workspace/usd
-      - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
-      - ./t-ACT-ROS/model:/workspace/model
+      # - ./t-ACT-ROS/usd:/workspace/usd
+      # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      # - ./t-ACT-ROS/model:/workspace/model
       - ./fastdds.xml:/workspace/fastdds.xml:ro
     # depends_on:
     #   - trainer
@@ -105,8 +105,8 @@ services:
       shm_size: '16gb'
       working_dir: /workspace/inference_ros
       volumes:
-        - ./t-ACT-ROS/model:/workspace/model
-        - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+        # - ./t-ACT-ROS/model:/workspace/model
+        # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
         - ./fastdds.xml:/workspace/fastdds.xml:ro
       # depends_on:
       #   - isaac-node
