@@ -31,7 +31,7 @@ services:
   trainer:
     container_name: trainer   
     image: ghcr.io/lemongooo/trainer:latest    
-    volumes:
+    # volumes:
       # - ./t-ACT-ROS/dataset:/workspace/dataset
       # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
     deploy:
