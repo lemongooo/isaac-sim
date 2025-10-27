@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-node
+  template:
+    metadata:
+      labels:
+        app: model-node
+    spec:
+      runtimeClassName: nvidia   # 启用 GPU 支持
+      containers:
+      - name: model-node
+        image: ghcr.io/lemongooo/model-node:latest
+        workingDir: /workspace/inference_ros
+        env:
+        - { name: ROS_DISTRO, value: "humble" }
+        - { name: RMW_IMPLEMENTATION, value: "rmw_fastrtps_cpp" }
+        - { name: ROS_DOMAIN_ID, value: "0" }
+        - { name: ROS_LOCALHOST_ONLY, value: "0" }
+        - { name: FASTRTPS_DEFAULT_PROFILES_FILE, value: "/workspace/fastdds.xml" }
+        - { name: NVIDIA_DRIVER_CAPABILITIES, value: "all" }
+        - { name: NVIDIA_VISIBLE_DEVICES, value: "all" }
+        - { name: MINIO_ENDPOINT, value: "minio-service:9000" }
+        resources:
+          requests:
+            nvidia.com/gpu: "1"
+            memory: "12Gi"
+          limits:
+            nvidia.com/gpu: "1"
+            memory: "16Gi"
+        volumeMounts:
+        - { name: dshm, mountPath: /dev/shm }
+        - { name: checkpoints, mountPath: /workspace/checkpoints }
+        - { name: fastdds, mountPath: /workspace/fastdds.xml}
+        command: ["/bin/bash","-lc"]
+        args:
+        - >
+          sleep infinity
+      volumes:
+      - name: dshm
+        emptyDir: { medium: Memory, sizeLimit: 16Gi }
+      - name: checkpoints
+        hostPath:
+          path: /mnt/data/checkpoints     # 对应宿主机的数据路径
+          type: DirectoryOrCreate
+      - name: fastdds
+        hostPath:
+          path: /mnt/data/fastdds.xml
+          type: FileOrCreate

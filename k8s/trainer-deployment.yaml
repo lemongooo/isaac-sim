@@ -1,0 +1,76 @@
+apiVersion: apps/v1  
+kind: Deployment   
+metadata:
+  name: trainer
+  labels:
+    app: trainer
+spec:
+  replicas: 1 
+  selector:  
+    matchLabels:
+      app: trainer
+  
+  template:
+    metadata:
+      labels:
+        app: trainer
+    spec:
+      runtimeClassName: nvidia
+      containers:
+      - name: trainer
+        image: ghcr.io/lemongooo/trainer:latest
+        
+        command:
+        - python
+        - train_minio.py
+        args:
+        - --data_path
+        - /workspace/dataset
+        - --save_dir
+        - /workspace/checkpoints
+        - --epochs
+        - "50"
+        
+        env:
+        - name: MINIO_ENDPOINT
+          value: "minio-service:9000"
+        - name: MINIO_ACCESS_KEY
+          value: "admin"
+        - name: MINIO_SECRET_KEY
+          value: "admin12345"
+        
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+            memory: "32Gi"
+          requests:
+            nvidia.com/gpu: "1"
+            memory: "16Gi"
+        
+        volumeMounts:
+        - name: dataset
+          mountPath: /workspace/dataset
+          readOnly: true
+        - name: checkpoints
+          mountPath: /workspace/checkpoints
+        - name: dshm
+          mountPath: /dev/shm
+      
+      hostIPC: true
+      
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      
+      volumes:
+      - name: dataset
+        persistentVolumeClaim:
+          claimName: dataset-pvc
+      - name: checkpoints
+        persistentVolumeClaim:
+          claimName: checkpoints-pvc
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi

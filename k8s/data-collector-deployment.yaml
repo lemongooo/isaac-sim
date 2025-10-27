@@ -1,0 +1,155 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: data-collector
+#   labels:
+#     app: data-collector
+# spec:
+#   replicas: 1
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 1           # 允许最多多 1 个 Pod
+#       maxUnavailable: 1     # ← 改成 1，允许旧 Pod 先删除
+#   selector:
+#     matchLabels:
+#       app: data-collector
+#   template:
+#     metadata:
+#       labels:
+#         app: data-collector
+#     spec:
+#       runtimeClassName: nvidia  # ← 关键：必须添加这个！
+      
+#       containers:
+#       - name: data-collector
+#         image: ghcr.io/lemongooo/data-collector:latest
+        
+#         command:
+#         - /bin/bash
+#         - -c
+#         args:
+#         - |
+#           /isaac-sim/python.sh -m pip install psutil && \
+#           /isaac-sim/python.sh /workspace/main1.py --headless=true
+        
+#         env:
+#         - name: ACCEPT_EULA
+#           value: "Y"
+#         - name: NVIDIA_DRIVER_CAPABILITIES
+#           value: "all"
+#         - name: NVIDIA_VISIBLE_DEVICES
+#           value: "all"
+        
+#         resources:
+#           limits:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"  # ← 建议增加，Isaac Sim 很吃内存
+#           requests:
+#             nvidia.com/gpu: "1"
+#             memory: "8Gi"   # ← 建议增加
+        
+#         volumeMounts:
+#         - name: dataset
+#           mountPath: /root/Documents/t-ACT-ROS/dataset
+#         - name: dshm
+#           mountPath: /dev/shm
+        
+#         securityContext:
+#           capabilities:
+#             add:
+#             - IPC_LOCK
+      
+#       hostIPC: true
+      
+#       # 添加 tolerations 以匹配 GPU 节点
+#       tolerations:
+#       - key: nvidia.com/gpu
+#         operator: Exists
+#         effect: NoSchedule
+      
+#       volumes:
+#       - name: dataset
+#         persistentVolumeClaim:
+#           claimName: dataset-pvc
+#       - name: dshm
+#         emptyDir:
+#           medium: Memory
+#           sizeLimit: 16Gi
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-collector
+  labels:
+    app: data-collector
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1           # 允许最多多 1 个 Pod
+      maxUnavailable: 1     # ← 改成 1，允许旧 Pod 先删除
+  selector:
+    matchLabels:
+      app: data-collector
+  template:
+    metadata:
+      labels:
+        app: data-collector
+    spec:
+      runtimeClassName: nvidia
+      
+      containers:
+      - name: data-collector
+        image: ghcr.io/lemongooo/data-collector:latest
+        
+        # ← 关键：让容器保持运行但不执行任务
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Data collector ready. Use 'kubectl exec' to run collection."
+          sleep infinity
+        
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "all"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+            memory: "32Gi"
+          requests:
+            nvidia.com/gpu: "1"
+            memory: "16Gi"
+        
+        volumeMounts:
+        - name: dataset
+          mountPath: /root/Documents/t-ACT-ROS/dataset
+        - name: dshm
+          mountPath: /dev/shm
+        
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+      
+      hostIPC: true
+      
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      
+      volumes:
+      - name: dataset
+        persistentVolumeClaim:
+          claimName: dataset-pvc
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi

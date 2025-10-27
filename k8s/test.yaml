@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: isaac-min
+spec:
+  hostNetwork: true
+  hostIPC: true
+  runtimeClassName: nvidia
+  containers:
+  - name: isaac
+    image: ghcr.io/lemongooo/isaac-sim-node:latest
+    env:
+    - name: ACCEPT_EULA
+      value: "Y"
+    - name: OMNI_KIT_ALLOW_ROOT
+      value: "1"     # Isaac GUI 以 root 运行时必须加！
+    - name: DISPLAY
+      value: ":0"
+    - name: NVIDIA_DRIVER_CAPABILITIES
+      value: "all"
+    - name: NVIDIA_VISIBLE_DEVICES
+      value: "all"
+    resources:
+      limits:
+        nvidia.com/gpu: "1"
+        memory: "16Gi"
+      requests:
+        nvidia.com/gpu: "1"
+        memory: "16Gi"
+    volumeMounts:
+    - name: x11
+      mountPath: /tmp/.X11-unix
+    - name: dshm
+      mountPath: /dev/shm
+    command: ["/bin/bash", "-lc"]
+    args:
+    - >
+      /isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py --headless=False
+  volumes:
+  - name: x11
+    hostPath:
+      path: /tmp/.X11-unix
+      type: Directory
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 16Gi

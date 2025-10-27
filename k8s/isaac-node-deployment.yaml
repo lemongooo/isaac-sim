@@ -1,0 +1,309 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: isaac-node
+#   labels:
+#     app: isaac-node
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: isaac-node
+#   template:
+#     metadata:
+#       labels:
+#         app: isaac-node
+#     spec:
+#       containers:
+#       - name: isaac-node
+#         image: ghcr.io/lemongooo/isaac-sim-node:latest
+#         imagePullPolicy: IfNotPresent
+        
+#         command:
+#         - /bin/bash
+#         - -c
+#         - |
+#           echo "Starting Isaac Sim Node..."
+#           sleep infinity
+#         # args:
+#         # - |
+#         #   /isaac-sim/python.sh -m pip install numpy==1.26.0 --force-reinstall --no-deps && \
+#         #   /isaac-sim/python.sh /workspace/inference_ros/isaac_node_single.py
+        
+#         env:
+#         - name: ACCEPT_EULA
+#           value: "Y"
+#         - name: ROS_DISTRO
+#           value: "humble"
+#         - name: RMW_IMPLEMENTATION
+#           value: "rmw_fastrtps_cpp"
+#         - name: NVIDIA_DRIVER_CAPABILITIES
+#           value: "all"
+#         - name: NVIDIA_VISIBLE_DEVICES
+#           value: "all"
+#         - name: DISPLAY
+#           value: ":0"
+#         - name: ROS_DOMAIN_ID
+#           value: "0"
+#         - name: ROS_LOCALHOST_ONLY
+#           value: "0"
+        
+#         resources:
+#           limits:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+#           requests:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+        
+#         volumeMounts:
+#         - name: usd
+#           mountPath: /workspace/usd
+#         - name: dshm
+#           mountPath: /dev/shm
+      
+#       hostNetwork: true
+#       hostIPC: true
+#       dnsPolicy: ClusterFirstWithHostNet
+      
+#       volumes:
+#       - name: usd
+#         hostPath:
+#           path: /mnt/data/usd
+#           type: DirectoryOrCreate
+#       - name: dshm
+#         emptyDir:
+#           medium: Memory
+#           sizeLimit: 16Gi
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: isaac-node
+#   labels:
+#     app: isaac-node
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: isaac-node
+#   runtimeClassName: nvidia
+#   template:
+#     metadata:
+#       labels:
+#         app: isaac-node
+#     spec:
+#       containers:
+#       - name: isaac-node
+#         image: ghcr.io/lemongooo/isaac-sim-node:latest
+#         imagePullPolicy: IfNotPresent
+        
+#         command:
+#         - /bin/bash
+#         - -c
+#         args:
+#         - |
+#           sleep infinity
+        
+#         env:
+#         - name: ACCEPT_EULA
+#           value: "Y"
+#         - name: ROS_DISTRO
+#           value: "humble"
+#         - name: RMW_IMPLEMENTATION
+#           value: "rmw_fastrtps_cpp"
+#         - name: NVIDIA_DRIVER_CAPABILITIES
+#           value: "all"
+#         - name: NVIDIA_VISIBLE_DEVICES
+#           value: "all"
+#         - name: OMNI_KIT_ALLOW_ROOT  # ← 关键2：允许 root 运行 GUI
+#           value: "1"
+#         # ====== DISPLAY 配置 ======
+#         - name: DISPLAY
+#           value: ":0"                    # ← 添加 DISPLAY
+        
+#         resources:
+#           limits:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+#           requests:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+        
+#         volumeMounts:
+#         - name: usd
+#           mountPath: /workspace/usd
+#         # ====== X11 socket ======
+#         - name: x11
+#           mountPath: /tmp/.X11-unix      # ← 添加 X11 挂载
+#         - name: dshm
+#           mountPath: /dev/shm
+        
+#         securityContext:
+#           privileged: false              # 不需要特权模式
+      
+#       hostNetwork: true
+#       hostIPC: true
+#       dnsPolicy: ClusterFirstWithHostNet
+      
+#       volumes:
+#       - name: usd
+#         hostPath:
+#           path: /mnt/data/usd
+#           type: DirectoryOrCreate
+#       # ====== X11 socket ======
+#       - name: x11
+#         hostPath:
+#           path: /tmp/.X11-unix           # ← 添加 X11 volume
+#           type: Directory
+#       - name: dshm
+#         emptyDir:
+#           medium: Memory
+#           sizeLimit: 16Gi
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: isaac-node
+#   labels:
+#     app: isaac-node
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: isaac-node
+#   template:
+#     metadata:
+#       labels:
+#         app: isaac-node
+#     spec:
+#       runtimeClassName: nvidia  # ← 添加：必须使用 nvidia runtime
+      
+#       containers:
+#       - name: isaac-node
+#         image: ghcr.io/lemongooo/isaac-sim-node:latest
+#         imagePullPolicy: IfNotPresent
+        
+#         # ====== 修改启动命令 ======
+#         command: ["/bin/bash", "-lc"]  # ← 改为 login shell
+#         args:
+#         - |
+#           sleep infinity
+
+        
+#         env:
+#         - name: ACCEPT_EULA
+#           value: "Y"
+#         - name: OMNI_KIT_ALLOW_ROOT  # ← 添加：允许 root 运行 GUI（必须！）
+#           value: "1"
+#         - name: ROS_DISTRO
+#           value: "humble"
+#         - name: RMW_IMPLEMENTATION
+#           value: "rmw_fastrtps_cpp"
+#         - name: DISPLAY
+#           value: ":0"
+#         - name: NVIDIA_DRIVER_CAPABILITIES
+#           value: "all"
+#         - name: NVIDIA_VISIBLE_DEVICES
+#           value: "all"
+        
+#         resources:
+#           limits:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+#           requests:
+#             nvidia.com/gpu: "1"
+#             memory: "16Gi"
+        
+#         volumeMounts:
+#         - name: usd
+#           mountPath: /workspace/usd
+#         - name: checkpoints
+#           mountPath: /workspace/checkpoints
+#         - name: model
+#           mountPath: /workspace/model
+#         - name: x11
+#           mountPath: /tmp/.X11-unix
+#         - name: dshm
+#           mountPath: /dev/shm
+        
+#         workingDir: /workspace/inference_ros
+        
+#         securityContext:
+#           privileged: false
+      
+#       hostNetwork: true
+#       hostIPC: true
+#       dnsPolicy: ClusterFirstWithHostNet
+      
+#       volumes:
+#       - name: usd
+#         hostPath:
+#           path: /mnt/data/usd
+#           type: DirectoryOrCreate
+#       - name: checkpoints
+#         hostPath:
+#           path: /mnt/data/checkpoints
+#           type: DirectoryOrCreate
+#       - name: model
+#         hostPath:
+#           path: /mnt/data/model
+#           type: DirectoryOrCreate
+#       - name: x11
+#         hostPath:
+#           path: /tmp/.X11-unix
+#           type: Directory
+#       - name: dshm
+#         emptyDir:
+#           medium: Memory
+#           sizeLimit: 16Gi
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: isaac-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: isaac-node
+  template:
+    metadata:
+      labels:
+        app: isaac-node
+    spec:
+      hostNetwork: true
+      hostIPC: true
+      runtimeClassName: nvidia
+      containers:
+      - name: isaac-node
+        image: ghcr.io/lemongooo/isaac-sim-node:latest
+        workingDir: /workspace/inference_ros
+        env:
+        - { name: ACCEPT_EULA, value: "Y" }
+        - { name: OMNI_KIT_ALLOW_ROOT, value: "1" }
+        - { name: DISPLAY, value: ":0" }
+        - { name: ROS_DISTRO, value: "humble" }
+        - { name: RMW_IMPLEMENTATION, value: "rmw_fastrtps_cpp" }
+        - { name: ROS_DOMAIN_ID, value: "0" }
+        - { name: ROS_LOCALHOST_ONLY, value: "0" }
+        - { name: FASTRTPS_DEFAULT_PROFILES_FILE, value: "/workspace/fastdds.xml" }
+        - { name: NVIDIA_DRIVER_CAPABILITIES, value: "all" }
+        - { name: NVIDIA_VISIBLE_DEVICES, value: "all" }
+        resources:
+          requests: { nvidia.com/gpu: "1", memory: "24Gi" }
+          limits:   { nvidia.com/gpu: "1", memory: "32Gi" }
+        volumeMounts:
+        - { name: x11, mountPath: /tmp/.X11-unix }
+        - { name: dshm, mountPath: /dev/shm }
+        - { name: fastdds, mountPath: /workspace/fastdds.xml}
+        command: ["/bin/bash","-lc"]
+        args:
+        - >
+          sleep infinity
+      volumes:
+      - name: x11
+        hostPath: { path: /tmp/.X11-unix, type: Directory }
+      - name: dshm
+        emptyDir: { medium: Memory, sizeLimit: 16Gi }
+      - name: fastdds
+        hostPath: { path: /mnt/data/fastdds.xml, type: File }
