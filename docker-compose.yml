@@ -149,9 +149,9 @@ services:
         # 添加 Fast DDS 配置
         - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastdds.xml
       runtime: nvidia
-      # network_mode: "host"
-      networks:
-      - ros_network
+      network_mode: "host"
+      # networks:
+      # - ros_network
       ipc: host
       shm_size: '16gb'
       working_dir: /workspace/inference_ros
