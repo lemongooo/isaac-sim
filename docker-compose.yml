@@ -33,7 +33,7 @@ services:
     image: ghcr.io/lemongooo/trainer:latest    
     volumes:
       - ./t-ACT-ROS/dataset:/workspace/dataset
-      - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
     deploy:
       resources:
         reservations:
@@ -49,6 +49,30 @@ services:
       stack: 67108864
     command: >
       python train_minio.py
+        --data_path /workspace/dataset
+        --save_dir /workspace/checkpoints
+  
+  trainer-test:
+    container_name: trainer-test   
+    image: ghcr.io/lemongooo/trainer:test   
+    volumes:
+      - ./t-ACT-ROS/dataset:/workspace/dataset
+      # - checkpoints-data:/workspace/checkpoints
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ipc: host
+    network_mode: "host"
+    shm_size: '16gb'   
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    command: >
+      python train.py
         --data_path /workspace/dataset
         --save_dir /workspace/checkpoints
   
@@ -68,16 +92,16 @@ services:
       # 添加 Fast DDS 配置
       - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastdds.xml
     runtime: nvidia
-    # network_mode: "host"
-    networks:
-      - ros_network
+    network_mode: "host"
+    # networks:
+    #   - ros_network
     ipc: host
     shm_size: '16gb'
     working_dir: /workspace/inference_ros
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       # - ./t-ACT-ROS/usd:/workspace/usd
-      - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+      # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
       # - ./t-ACT-ROS/model:/workspace/model
       - ./fastdds.xml:/workspace/fastdds.xml:ro
     # depends_on:
@@ -107,11 +131,40 @@ services:
       working_dir: /workspace/inference_ros
       volumes:
         # - ./t-ACT-ROS/model:/workspace/model
-        - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+        # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
         - ./fastdds.xml:/workspace/fastdds.xml:ro
       # depends_on:
       #   - isaac-node
-      command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single_minio.py --device=cuda"]
+      # command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single_minio.py --device=cuda"]
+      command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single.py --device=cuda"]
+  
+  model-node-test:
+      image: ghcr.io/lemongooo/model-node:test
+      container_name: model-node-test
+      environment:
+        - ROS_DISTRO=humble
+        - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+        - ROS_DOMAIN_ID=0
+        - ROS_LOCALHOST_ONLY=0
+        # 添加 Fast DDS 配置
+        - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastdds.xml
+      runtime: nvidia
+      # network_mode: "host"
+      networks:
+      - ros_network
+      ipc: host
+      shm_size: '16gb'
+      working_dir: /workspace/inference_ros
+      volumes:
+        # - ./t-ACT-ROS/model:/workspace/model
+        # - ./t-ACT-ROS/checkpoints:/workspace/checkpoints
+        # - checkpoints-data:/workspace/checkpoints
+        - ./fastdds.xml:/workspace/fastdds.xml:ro
+      # depends_on:
+      #   - isaac-node
+      # command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single_minio.py --device=cuda"]
+      command: ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 /workspace/inference_ros/mnode_single.py --device=cuda"]
+  
   
   minio:
       image: quay.io/minio/minio:latest
