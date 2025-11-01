@@ -273,6 +273,8 @@ spec:
     spec:
       hostNetwork: true
       hostIPC: true
+      nodeSelector:
+        tier: fog
       runtimeClassName: nvidia
       containers:
       - name: isaac-node

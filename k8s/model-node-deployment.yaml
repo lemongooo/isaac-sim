@@ -12,6 +12,8 @@ spec:
       labels:
         app: model-node
     spec:
+      # hostNetwork: true
+      hostIPC: true
       runtimeClassName: nvidia   # 启用 GPU 支持
       containers:
       - name: model-node
@@ -26,6 +28,7 @@ spec:
         - { name: NVIDIA_DRIVER_CAPABILITIES, value: "all" }
         - { name: NVIDIA_VISIBLE_DEVICES, value: "all" }
         - { name: MINIO_ENDPOINT, value: "minio-service:9000" }
+        # - { name: MINIO_ENDPOINT, value: "localhost:30900" }
         resources:
           requests:
             nvidia.com/gpu: "1"
@@ -51,4 +54,4 @@ spec:
       - name: fastdds
         hostPath:
           path: /mnt/data/fastdds.xml
-          type: FileOrCreate
+          type: File
